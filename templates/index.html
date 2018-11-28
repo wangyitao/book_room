@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% load huiyishi_tags %}
+{% block title %}
+    预定课程
+{% endblock %}
+
+{% block header_extends %}
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
+{% endblock %}
+
+
+{% block content %}
+    <input class="float-right ui-datepicker" id="mydate" type="date" value="{{ date }}"
+           onchange="date_change(this.value)" min="{{ today }}">
+
+    <table id="tab" class="table table-bordered">
+        <thead>
+        <tr>
+            <th scope="col">会议室</th>
+            {% get_time_choise as choises %}
+            {% for choise in choises %}
+                <th scope="col">{{ choise.1 }}</th>
+            {% endfor %}
+        </tr>
+        </thead>
+        <tbody>
+        {% get_rooms as rooms %}
+        {% for room in rooms %}
+            <tr>
+                <th scope="col">{{ room.caption }}({{ room.num }})</th>
+
+                {% for choise in choises %}
+                    <td
+                            {% for item in book_list.items %}
+                                {% if item.0 == room.caption %}
+                                    {% for i in item.1 %}
+                                        {% if i.0 == choise.0 %}
+                                            style="background: rosybrown"
+                                            value="{{ i.1 }}"
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                                {{ item.0 }}
+                            {% endfor %}
+                                            room-caption="{{ room.caption }}" myval="{{ choise.0 }}"
+                                            class="content"></td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block js %}
+    <script type="text/javascript">
+        var isindex = true;
+        var visitor = '{% if user.is_authenticated %}{{ user }}{% else %}  {% endif %}';
+    </script>
+
+
+    <script>
+        function tabCell() {
+            let tab = document.getElementById('tab');
+            let rows = tab.rows;
+            let rlen = rows.length;
+            let date = $('#mydate').val();
+
+            for (let i = 1; i < rlen; i++) { //遍历所有行
+                let cells = rows[i].cells; //得到这一行的所有单元格
+                for (let j = 1; j < cells.length; j++) {
+                    let value = cells[j].getAttribute('value');
+                    if (value) {
+                        cells[j].innerText = value;
+                    }
+
+                    //给每一个单元格添加click事件
+                    cells[j].onclick = function () {
+                        choise_id = $(this).attr('myval');
+                        room_caption = $(this).attr('room-caption');
+                        let el = this;
+                        if (el.style.background === '') {
+                            // 预定成功
+                            $.ajax({
+                                url: '{% url 'book' %}',
+                                type: 'GET',
+                                data: {
+                                    'choise_id': choise_id,
+                                    'room_caption': room_caption,
+                                    'user': '{{ user.username }}',
+                                    'date': date,
+                                },
+                                cache: false,
+                                success: function (data) {
+                                    if (data['status'] === 'SUCCESS') {
+                                        el.style.background = 'rosybrown';
+                                        el.innerText = "{{ user }}";
+                                        alert(data['msg']);
+                                    } else {
+                                        alert(data['msg'])
+                                    }
+                                },
+                                error: function (xhr) {
+
+                                }
+                            });
+
+
+                        } else {
+                            $.ajax({
+                                url: '{% url 'un_book' %}',
+                                type: 'GET',
+                                data: {
+                                    'choise_id': choise_id,
+                                    'room_caption': room_caption,
+                                    'user': '{{ user.username }}',
+                                    'date': date,
+                                },
+                                cache: false,
+                                success: function (data) {
+                                    if (data['status'] === 'SUCCESS') {
+                                        el.style.background = '';
+                                        el.innerText = "";
+                                        alert(data['msg']);
+                                    } else {
+                                        alert(data['msg'])
+                                    }
+
+
+                                },
+                                error: function (xhr) {
+
+                                }
+                            });
+
+                        }
+                    }
+
+                }
+            }
+        }
+
+        tabCell();
+
+        function date_change(data) {
+            let date = $('#mydate').val();
+            window.location.href = `{% url 'index' %}?date=${date}`;
+        }
+    </script>
+
+    <script>
+        $(".nav-home").addClass("active").siblings().removeClass("active");
+    </script>
+{% endblock %}
