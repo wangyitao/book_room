@@ -1,6 +1,17 @@
 # 启动：
-#### 找到manage.py目录，运行python3 manage.py runserver
-
+#### 找到manage.py目录，依次执行如下代码
+```python
+    # 初始化熟即可
+    python3 manage.py makemigrations
+    python3 manage.py migrate
+    
+    # 创建超级用户
+    python3 manage.py createsuperuser
+    
+    # 启动服务
+    python3 manage.py runserver
+    
+```
 # 当前有两个超级管理员：
 #### 1 username:felix   password:felixwang
 #### 2 username:felix2  password:felixwang
